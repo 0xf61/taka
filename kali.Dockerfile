@@ -9,6 +9,7 @@ RUN apt -y update && apt -y upgrade && \
   fd-find \
   fish \
   fzf \
+  gcc \
   git \
   gzip \
   lazygit \
@@ -17,6 +18,7 @@ RUN apt -y update && apt -y upgrade && \
   ripgrep \
   unzip
 
+RUN curl -fsSL https://pkgs.netbird.io/install.sh | sh
 
 # Install lazyvim
 RUN git clone https://github.com/LazyVim/starter ~/.config/nvim && rm -rf ~/.config/nvim/.git
