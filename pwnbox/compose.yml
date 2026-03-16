@@ -1,0 +1,18 @@
+services:
+  pwnbox:
+    build:
+      context: ..
+      dockerfile: pwnbox.Dockerfile
+    image: pwnbox:latest
+    container_name: pwnbox
+    hostname: pwnbox
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      - TZ=UTC
+    restart: unless-stopped

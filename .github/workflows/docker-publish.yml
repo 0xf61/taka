@@ -15,7 +15,7 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    # Add permissions to ensure GITHUB_TOKEN has write access to packages
+    timeout-minutes: 120
     permissions:
       packages: write
       contents: read
@@ -28,6 +28,8 @@ jobs:
             file: arch.Dockerfile
           - name: kali
             file: kali.Dockerfile
+          - name: pwnbox
+            file: pwnbox.Dockerfile
 
     steps:
       - name: Checkout repository
@@ -54,7 +56,6 @@ jobs:
           context: .
           file: ${{ matrix.dockerfile.file }}
           platforms: linux/amd64,linux/arm64
-
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.dockerfile.name }}
