@@ -1,6 +1,8 @@
 FROM docker.io/archlinux/archlinux:latest
 
 LABEL maintainer="github.com/0xf61"
+LABEL org.opencontainers.image.source="https://github.com/0xf61/taka"
+LABEL org.opencontainers.image.description="Dev container with security research tools (arch)"
 
 # Base Requirements for working with lazyvim
 RUN pacman -Syu --noconfirm \

@@ -1,6 +1,8 @@
 FROM docker.io/kalilinux/kali-bleeding-edge:latest
 
 LABEL maintainer="github.com/0xf61"
+LABEL org.opencontainers.image.source="https://github.com/0xf61/taka"
+LABEL org.opencontainers.image.description="Dev container with security research tools (kali)"
 
 # Base Requirements for working with lazyvim
 RUN apt -y update && apt -y upgrade && \

@@ -12,6 +12,11 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
+# Only the latest commit gets built; outdated runs are cancelled
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
@@ -20,6 +25,7 @@ jobs:
       packages: write
       contents: read
     strategy:
+      fail-fast: false
       matrix:
         dockerfile:
           - name: alpine
@@ -50,7 +56,6 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker image
-        continue-on-error: true
         uses: docker/build-push-action@v6
         with:
           context: .

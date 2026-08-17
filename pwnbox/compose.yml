@@ -15,4 +15,6 @@ services:
       - /dev/net/tun:/dev/net/tun
     environment:
       - TZ=UTC
+    init: true
+    shm_size: "1gb"
     restart: unless-stopped

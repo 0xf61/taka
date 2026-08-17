@@ -1,6 +1,11 @@
 FROM kalilinux/kali-bleeding-edge
 
 LABEL maintainer="github.com/0xf61"
+LABEL org.opencontainers.image.source="https://github.com/0xf61/taka"
+LABEL org.opencontainers.image.description="Pentest container with VPN, RDP and security tooling"
+
+# Auto-set by Buildx per target platform (amd64/arm64)
+ARG TARGETARCH
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=UTC
@@ -55,9 +60,9 @@ RUN apt-get update && \
     xrdp \
     xserver-xorg-core && \
     # ProjectDiscovery tools
-    wget -q https://github.com/projectdiscovery/nuclei/releases/download/v3.3.9/nuclei_3.3.9_linux_amd64.zip -O /tmp/nuclei.zip && \
-    wget -q https://github.com/projectdiscovery/subfinder/releases/download/v2.6.8/subfinder_2.6.8_linux_amd64.zip -O /tmp/subfinder.zip && \
-    wget -q https://github.com/projectdiscovery/httpx/releases/download/v1.6.9/httpx_1.6.9_linux_amd64.zip -O /tmp/httpx.zip && \
+    wget -q https://github.com/projectdiscovery/nuclei/releases/download/v3.3.9/nuclei_3.3.9_linux_${TARGETARCH}.zip -O /tmp/nuclei.zip && \
+    wget -q https://github.com/projectdiscovery/subfinder/releases/download/v2.6.8/subfinder_2.6.8_linux_${TARGETARCH}.zip -O /tmp/subfinder.zip && \
+    wget -q https://github.com/projectdiscovery/httpx/releases/download/v1.6.9/httpx_1.6.9_linux_${TARGETARCH}.zip -O /tmp/httpx.zip && \
     unzip -q /tmp/nuclei.zip -d /usr/local/bin nuclei && \
     unzip -q /tmp/subfinder.zip -d /usr/local/bin subfinder && \
     unzip -q /tmp/httpx.zip -d /usr/local/bin httpx && \
@@ -69,8 +74,8 @@ RUN apt-get update && \
     # Netbird
     curl -fsSL https://pkgs.netbird.io/install.sh | sh || true && \
     # ShortScanner
-    go install github.com/bitquark/shortscan/cmd/shortscan@latest && mv ~/go/bin/shortscan /usr/local/bin && \
-    # Atuin+Asciinema Alternative
+    go install github.com/bitquark/shortscan/cmd/shortscan@v0.9.2 && mv ~/go/bin/shortscan /usr/local/bin && \
+    # Atuin+Asciinema Alternative (no tags/release in repo, @latest is the only ref)
     go install github.com/0xf61/iz@latest && mv ~/go/bin/iz /usr/local/bin && \
     # Cleanup
     apt-get autoremove -y && \

@@ -1,6 +1,8 @@
 FROM docker.io/library/alpine:latest
 
 LABEL maintainer="github.com/0xf61"
+LABEL org.opencontainers.image.source="https://github.com/0xf61/taka"
+LABEL org.opencontainers.image.description="Dev container with security research tools (alpine)"
 
 # Base Requirements for working with lazyvim
 RUN apk add \
