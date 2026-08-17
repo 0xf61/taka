@@ -68,6 +68,10 @@ RUN apt-get update && \
     # apt-get update && apt-get install -y --no-install-recommends tailscale && \
     # Netbird
     curl -fsSL https://pkgs.netbird.io/install.sh | sh || true && \
+    # ShortScanner
+    go install github.com/bitquark/shortscan/cmd/shortscan@latest && mv ~/go/bin/shortscan /usr/local/bin && \
+    # Atuin+Asciinema Alternative
+    go install github.com/0xf61/iz@latest && mv ~/go/bin/iz /usr/local/bin && \
     # Cleanup
     apt-get autoremove -y && \
     apt-get clean && \
