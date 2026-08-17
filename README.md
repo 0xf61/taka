@@ -18,3 +18,10 @@ docker run --rm -ti --name (basename $PWD) -v "$PWD":/code ghcr.io/0xf61/taka:ar
 ```
 docker run --rm -ti --name (basename $PWD) -v "$PWD":/code ghcr.io/0xf61/taka:kali
 ```
+
+```
+docker run -d --hostname hostname \
+--cap-add NET_ADMIN \
+--device /dev/net/tun:/dev/net/tun \
+ghcr.io/0xf61/taka:pwnbox
+```
