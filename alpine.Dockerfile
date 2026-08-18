@@ -17,7 +17,8 @@ RUN apk add \
   neovim \
   python3 \
   unzip \
-  ripgrep
+  ripgrep \
+  zip
 
 # Langs
 RUN apk add \

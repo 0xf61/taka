@@ -17,7 +17,8 @@ RUN pacman -Syu --noconfirm \
   neovim \
   python3 \
   unzip \
-  ripgrep
+  ripgrep \
+  zip
 
 # Langs
 RUN pacman -S --noconfirm \

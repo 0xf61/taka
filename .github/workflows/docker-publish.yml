@@ -62,6 +62,8 @@ jobs:
           file: ${{ matrix.dockerfile.file }}
           platforms: linux/amd64,linux/arm64
           push: true
+          cache-from: type=gha,scope=buildx-${{ matrix.dockerfile.name }}
+          cache-to: type=gha,mode=max,scope=buildx-${{ matrix.dockerfile.name }}
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.dockerfile.name }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.dockerfile.name }}-${{ github.sha }}

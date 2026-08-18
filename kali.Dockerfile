@@ -18,7 +18,8 @@ RUN apt -y update && apt -y upgrade && \
   neovim \
   python3 \
   ripgrep \
-  unzip
+  unzip \
+  zip
 
 RUN curl -fsSL https://pkgs.netbird.io/install.sh | sh
 

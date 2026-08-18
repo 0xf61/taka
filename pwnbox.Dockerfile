@@ -4,9 +4,6 @@ LABEL maintainer="github.com/0xf61"
 LABEL org.opencontainers.image.source="https://github.com/0xf61/taka"
 LABEL org.opencontainers.image.description="Pentest container with VPN, RDP and security tooling"
 
-# Auto-set by Buildx per target platform (amd64/arm64)
-ARG TARGETARCH
-
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=UTC
 
@@ -40,13 +37,13 @@ RUN apt-get update && \
     metasploit-framework \
     neovim \
     nmap \
-    netexec \
     net-tools \
     openconnect \
     openresolv \
     openvpn \
     pipx \
     python3 \
+    python3-dev \
     ripgrep \
     rlwrap \
     seclists \
@@ -58,19 +55,8 @@ RUN apt-get update && \
     wireguard \
     xorgxrdp \
     xrdp \
-    xserver-xorg-core && \
-    # ProjectDiscovery tools
-    wget -q https://github.com/projectdiscovery/nuclei/releases/download/v3.3.9/nuclei_3.3.9_linux_${TARGETARCH}.zip -O /tmp/nuclei.zip && \
-    wget -q https://github.com/projectdiscovery/subfinder/releases/download/v2.6.8/subfinder_2.6.8_linux_${TARGETARCH}.zip -O /tmp/subfinder.zip && \
-    wget -q https://github.com/projectdiscovery/httpx/releases/download/v1.6.9/httpx_1.6.9_linux_${TARGETARCH}.zip -O /tmp/httpx.zip && \
-    unzip -q /tmp/nuclei.zip -d /usr/local/bin nuclei && \
-    unzip -q /tmp/subfinder.zip -d /usr/local/bin subfinder && \
-    unzip -q /tmp/httpx.zip -d /usr/local/bin httpx && \
-    rm -f /tmp/*.zip && \
-    # Tailscale
-    # curl -fsSL https://pkgs.tailscale.com/stable/debian/bullseye.noarmor.gpg | tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null && \
-    # curl -fsSL https://pkgs.tailscale.com/stable/debian/bullseye.tailscale-keyring.list | tee /etc/apt/sources.list.d/tailscale.list && \
-    # apt-get update && apt-get install -y --no-install-recommends tailscale && \
+    xserver-xorg-core \
+    zip && \
     # Netbird
     curl -fsSL https://pkgs.netbird.io/install.sh | sh || true && \
     # ShortScanner
@@ -88,6 +74,23 @@ RUN apt-get update && \
 RUN useradd -m -s /usr/bin/fish -G sudo,ssl-cert pwnbox && \
     echo "pwnbox:pwnbox" | chpasswd && \
     echo "pwnbox ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+# NetExec: Kali's apt release lags far behind upstream, so install the latest
+# from git main. pipx is broken when run as root, hence the pwnbox user.
+# pdtm (via go run, nothing kept) fetches the latest nuclei/subfinder/httpx
+# into ~/.local/bin which is already on PATH. Pre-run nxc once to init ~/.nxc.
+USER pwnbox
+RUN PIPX_HOME=/home/pwnbox/.local/pipx PIPX_BIN_DIR=/home/pwnbox/.local/bin \
+    pipx install --force "git+https://github.com/Pennyw0rth/NetExec.git@main" && \
+    /home/pwnbox/.local/bin/nxc --version || true && \
+    go run github.com/projectdiscovery/pdtm/cmd/pdtm@latest \
+        -i nuclei,subfinder,httpx \
+        -bp /home/pwnbox/.local/bin -nc -duc && \
+    go clean -modcache && \
+    rm -rf /home/pwnbox/.cache /home/pwnbox/go /home/pwnbox/.config/pdtm
+USER root
+RUN echo "fish_add_path -g /home/pwnbox/.local/bin" >> /etc/fish/config.fish
+ENV PATH="/home/pwnbox/.local/bin:${PATH}"
 
 RUN echo "startxfce4" > /home/pwnbox/.xsession && \
     chown pwnbox:pwnbox /home/pwnbox/.xsession
