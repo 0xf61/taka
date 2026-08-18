@@ -36,6 +36,9 @@ jobs:
             file: kali.Dockerfile
           - name: pwnbox
             file: pwnbox.Dockerfile
+            # pwnbox layers (~6.5GB) blow past the 10GB GHA cache repo limit and
+            # the weekly kali-bleeding-edge base bump invalidates them anyway
+            cache: false
 
     steps:
       - name: Checkout repository
@@ -62,8 +65,8 @@ jobs:
           file: ${{ matrix.dockerfile.file }}
           platforms: linux/amd64,linux/arm64
           push: true
-          cache-from: type=gha,scope=buildx-${{ matrix.dockerfile.name }}
-          cache-to: type=gha,mode=max,scope=buildx-${{ matrix.dockerfile.name }}
+          cache-from: ${{ matrix.dockerfile.cache && format('type=gha,scope=buildx-{0}', matrix.dockerfile.name) || 'type=gha,disabled=true' }}
+          cache-to: ${{ matrix.dockerfile.cache && format('type=gha,mode=max,scope=buildx-{0}', matrix.dockerfile.name) || 'type=gha,disabled=true' }}
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.dockerfile.name }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.dockerfile.name }}-${{ github.sha }}
