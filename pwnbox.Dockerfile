@@ -20,8 +20,8 @@ RUN apt-get update && \
     curl \
     dbus-x11 \
     fastfetch \
-    feroxbuster \
     fd-find \
+    feroxbuster \
     ffuf \
     fish \
     fzf \
@@ -32,12 +32,13 @@ RUN apt-get update && \
     iproute2 \
     iptables \
     iputils-ping \
+    jq \
     lazygit \
     lsd \
     metasploit-framework \
     neovim \
-    nmap \
     net-tools \
+    nmap \
     openconnect \
     openresolv \
     openvpn \
@@ -47,8 +48,8 @@ RUN apt-get update && \
     ripgrep \
     rlwrap \
     seclists \
-    sudo \
     sqlmap \
+    sudo \
     tmux \
     unzip \
     wget \
