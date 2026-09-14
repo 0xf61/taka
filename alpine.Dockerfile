@@ -18,7 +18,10 @@ RUN apk add \
   python3 \
   unzip \
   ripgrep \
+  tmux \
   zip
+
+COPY tmux.conf /etc/tmux.conf
 
 # Langs
 RUN apk add \

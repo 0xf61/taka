@@ -18,7 +18,10 @@ RUN pacman -Syu --noconfirm \
   python3 \
   unzip \
   ripgrep \
+  tmux \
   zip
+
+COPY tmux.conf /etc/tmux.conf
 
 # Langs
 RUN pacman -S --noconfirm \

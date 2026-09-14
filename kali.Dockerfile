@@ -18,8 +18,11 @@ RUN apt -y update && apt -y upgrade && \
   neovim \
   python3 \
   ripgrep \
+  tmux \
   unzip \
   zip
+
+COPY tmux.conf /etc/tmux.conf
 
 RUN curl -fsSL https://pkgs.netbird.io/install.sh | sh
 
