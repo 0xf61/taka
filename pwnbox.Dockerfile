@@ -12,6 +12,7 @@ RUN apt-get update && \
     useradd -m pwnbox
 
 RUN go install github.com/bitquark/shortscan/cmd/shortscan@v0.9.2 && \
+    go install github.com/ropnop/kerbrute@latest && \
     go install github.com/0xf61/iz@latest && \
     go clean -modcache
 
@@ -23,6 +24,9 @@ RUN go run github.com/projectdiscovery/pdtm/cmd/pdtm@latest \
     pipx install --force "git+https://github.com/Pennyw0rth/NetExec.git@main" && \
     # first nxc run inits ~/.nxc and exits 1
     /home/pwnbox/.local/bin/nxc --version || true && \
+    PIPX_HOME=/home/pwnbox/.local/pipx PIPX_BIN_DIR=/home/pwnbox/.local/bin \
+    pipx install frida-tools && \
+    pipx install impacket && \
     go clean -modcache && rm -rf /home/pwnbox/.cache
 
 # ---- Stage 2: final image ----
@@ -55,11 +59,19 @@ RUN apt-get update && \
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     adb \
+    apktool \
     aria2 \
+    bettercap \
+    bloodyad \
     btop \
     burpsuite \
     caido \
+    certipy-ad \
+    chisel \
+    coercer \
     curl \
+    enum4linux-ng \
+    evil-winrm \
     fastfetch \
     fd-find \
     feroxbuster \
@@ -68,31 +80,44 @@ RUN apt-get update && \
     fzf \
     git \
     gzip \
+    hashcat \
     iproute2 \
     iptables \
     iputils-ping \
     jq \
     lazygit \
+    ligolo-ng \
     lsd \
     metasploit-framework \
+    mitm6 \
     neovim \
     net-tools \
     nmap \
     openconnect \
     openresolv \
     openvpn \
+    proxychains4 \
     python3 \
     python3-argcomplete \
+    radare2 \
+    responder \
     ripgrep \
     rlwrap \
     seclists \
+    smbclient \
     sqlmap \
     sudo \
     tmux \
+    tshark \
     unzip \
     wget \
+    wireshark \
     wireguard \
+    wpscan \
     zip && \
+    # python3-impacket ships wrappers pointing into /usr/share/doc (which we
+    # delete); remove the broken wrappers, upstream impacket is pipx-installed
+    rm -f /usr/bin/impacket-* && \
     apt-get autoremove -y && apt-get clean && \
     rm -rf /var/cache/apt /var/lib/apt/lists/* /tmp/* /var/log/* \
            /usr/share/doc /usr/share/man /usr/share/locale/* /usr/share/info
@@ -107,6 +132,7 @@ RUN useradd -m -s /usr/bin/fish -G sudo,ssl-cert pwnbox && \
 # Go binaries + pipx venvs (venv python paths match: same base, same python3).
 # Must come after useradd or --chown=pwnbox can't resolve and .local ends up root-owned.
 COPY --from=tools /root/go/bin/shortscan /usr/local/bin/shortscan
+COPY --from=tools /root/go/bin/kerbrute /usr/local/bin/kerbrute
 COPY --from=tools /root/go/bin/iz /usr/local/bin/iz
 COPY --from=tools --chown=pwnbox:pwnbox /home/pwnbox/.local /home/pwnbox/.local
 
