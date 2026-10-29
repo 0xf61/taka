@@ -155,7 +155,7 @@ jobs:
           docker buildx imagetools create \
             -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:pwnbox \
             -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:pwnbox-${{ github.sha }} \
-            $(printf -- '--tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@sha256:%s ' *)
+            $(printf -- '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@sha256:%s ' *)
 
       - name: Inspect image
         run: docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:pwnbox
