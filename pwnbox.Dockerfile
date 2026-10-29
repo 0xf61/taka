@@ -14,6 +14,14 @@ RUN apt-get update && \
 RUN go install github.com/bitquark/shortscan/cmd/shortscan@v0.9.2 && \
     go install github.com/ropnop/kerbrute@latest && \
     go install github.com/0xf61/iz@latest && \
+    go install github.com/tomnomnom/waybackurls@latest && \
+    go install github.com/tomnomnom/httprobe@latest && \
+    go install github.com/tomnomnom/assetfinder@latest && \
+    go install github.com/tomnomnom/meg@latest && \
+    go install github.com/tomnomnom/qsreplace@latest && \
+    go install github.com/tomnomnom/gf@latest && \
+    go install github.com/lc/gau/v2/cmd/gau@latest && \
+    go install github.com/rix4uni/unew@latest && \
     go clean -modcache
 
 USER pwnbox
@@ -122,6 +130,15 @@ RUN apt-get update && \
     rm -rf /var/cache/apt /var/lib/apt/lists/* /tmp/* /var/log/* \
            /usr/share/doc /usr/share/man /usr/share/locale/* /usr/share/info
 
+RUN mkdir -p /etc/apt/keyrings && \
+    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+        -o /etc/apt/keyrings/githubcli-archive-keyring.gpg && \
+    echo "deb [arch=amd64,arm64 signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+        > /etc/apt/sources.list.d/github-cli.list && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends gh && \
+    rm -rf /var/cache/apt /var/lib/apt/lists/*
+
 # Netbird. Its own RUN so the || true can never mask an apt failure above.
 RUN curl -fsSL https://pkgs.netbird.io/install.sh | sh || true
 
@@ -129,11 +146,28 @@ RUN useradd -m -s /usr/bin/fish -G sudo,ssl-cert pwnbox && \
     echo "pwnbox:pwnbox" | chpasswd && \
     echo "pwnbox ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
+RUN git clone --depth 1 https://github.com/1ndianl33t/Gf-Patterns /tmp/gfpatterns && \
+    mkdir -p /home/pwnbox/.gf && \
+    find /tmp/gfpatterns -maxdepth 1 -name '*.json' -exec cp {} /home/pwnbox/.gf/ \; && \
+    rm -rf /tmp/gfpatterns && \
+    chown -R pwnbox:pwnbox /home/pwnbox/.gf
+
+RUN git clone --depth 1 https://github.com/six2dez/OneListForAll /usr/share/onelistforall && \
+    rm -rf /usr/share/onelistforall/.git
+
 # Go binaries + pipx venvs (venv python paths match: same base, same python3).
 # Must come after useradd or --chown=pwnbox can't resolve and .local ends up root-owned.
 COPY --from=tools /root/go/bin/shortscan /usr/local/bin/shortscan
 COPY --from=tools /root/go/bin/kerbrute /usr/local/bin/kerbrute
 COPY --from=tools /root/go/bin/iz /usr/local/bin/iz
+COPY --from=tools /root/go/bin/waybackurls /usr/local/bin/waybackurls
+COPY --from=tools /root/go/bin/httprobe /usr/local/bin/httprobe
+COPY --from=tools /root/go/bin/assetfinder /usr/local/bin/assetfinder
+COPY --from=tools /root/go/bin/meg /usr/local/bin/meg
+COPY --from=tools /root/go/bin/qsreplace /usr/local/bin/qsreplace
+COPY --from=tools /root/go/bin/gf /usr/local/bin/gf
+COPY --from=tools /root/go/bin/gau /usr/local/bin/gau
+COPY --from=tools /root/go/bin/unew /usr/local/bin/unew
 COPY --from=tools --chown=pwnbox:pwnbox /home/pwnbox/.local /home/pwnbox/.local
 
 RUN echo "fish_add_path -g /home/pwnbox/.local/bin" >> /etc/fish/config.fish

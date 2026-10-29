@@ -25,3 +25,5 @@ docker run -d --hostname hostname \
 --device /dev/net/tun:/dev/net/tun \
 ghcr.io/0xf61/taka:pwnbox
 ```
+
+pwnbox ships a bug-bounty recon pipeline: `assetfinder`/`waybackurls`/`gau` → `unew` → `httprobe` → `gf` (patterns in `~/.gf`), plus `meg`/`qsreplace`, `gh`, and the `six2dez/OneListForAll` wordlists alongside seclists in `/usr/share/onelistforall`.
