@@ -23,7 +23,10 @@ docker run --rm -ti --name (basename $PWD) -v "$PWD":/code ghcr.io/0xf61/taka:ka
 docker run -d --hostname hostname \
 --cap-add NET_ADMIN \
 --device /dev/net/tun:/dev/net/tun \
+-p 1337:1337 \
 ghcr.io/0xf61/taka:pwnbox
 ```
 
 pwnbox ships a bug-bounty recon pipeline: `assetfinder`/`waybackurls`/`gau` → `unew` → `httprobe` → `gf` (patterns in `~/.gf`), plus `meg`/`qsreplace`, `gh`, and the `six2dez/OneListForAll` wordlists alongside seclists in `/usr/share/onelistforall`.
+
+The UI is [Tuxee](https://github.com/agent0ai/tuxee) on port 1337: persistent web terminals and file manager. Log in as `pwnbox` / `pwnbox` (or `root`). Replaces the previous xrdp/XFCE desktop — same tooling, ~1 GB smaller image.

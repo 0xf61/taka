@@ -15,6 +15,7 @@ services:
       - /dev/net/tun:/dev/net/tun
     environment:
       - TZ=UTC
-    init: true
+    ports:
+      - "1337:1337"
     shm_size: "1gb"
     restart: unless-stopped

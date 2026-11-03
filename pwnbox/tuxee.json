@@ -1,0 +1,10 @@
+{
+  "httpPort": 1337,
+  "httpsPort": 0,
+  "state": "/var/lib/tuxee",
+  "hosts": "",
+  "acme": "auto",
+  "acmeDirectory": "",
+  "email": "",
+  "pam": "login"
+}

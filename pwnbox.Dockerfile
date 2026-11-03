@@ -3,6 +3,18 @@
 # NetExec's aardwolf dep needs cargo, pdtm refuses binaries outside $HOME (run as pwnbox).
 FROM kalilinux/kali-bleeding-edge AS tools
 
+# Pin the Kali CDN mirror: http.kali.org redirects to geo mirrors that
+# intermittently return HTTP 500 on CI runners and break the build.
+# Plain HTTP is fine for apt (release files are GPG-signed); the base image
+# ships without ca-certificates, so https would fail certificate verification.
+RUN printf '%s\n' \
+    'Types: deb' \
+    'URIs: http://kali.download/kali/' \
+    'Suites: kali-rolling kali-bleeding-edge' \
+    'Components: main contrib non-free non-free-firmware' \
+    'Signed-By: /usr/share/keyrings/kali-archive-keyring.gpg' \
+    > /etc/apt/sources.list.d/kali.sources
+
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=UTC
 
@@ -37,30 +49,38 @@ RUN go run github.com/projectdiscovery/pdtm/cmd/pdtm@latest \
     pipx install impacket && \
     go clean -modcache && rm -rf /home/pwnbox/.cache
 
-# ---- Stage 2: final image ----
+# ---- Stage 2: Tuxee web UI (replaces the old xrdp + XFCE desktop) ----
+# Binary, GUI (tuxee-Xvnc/vncpasswd) and docker runtime scripts are harvested
+# from the official image; the libs they need are installed with the tooling
+# layer below.
+FROM agent0ai/tuxee:latest AS tuxee
+
 FROM kalilinux/kali-bleeding-edge
+
+# Pin the Kali CDN mirror: http.kali.org redirects to geo mirrors that
+# intermittently return HTTP 500 on CI runners and break the build.
+# Plain HTTP is fine for apt (release files are GPG-signed); the base image
+# ships without ca-certificates, so https would fail certificate verification.
+RUN printf '%s\n' \
+    'Types: deb' \
+    'URIs: http://kali.download/kali/' \
+    'Suites: kali-rolling kali-bleeding-edge' \
+    'Components: main contrib non-free non-free-firmware' \
+    'Signed-By: /usr/share/keyrings/kali-archive-keyring.gpg' \
+    > /etc/apt/sources.list.d/kali.sources
 
 LABEL maintainer="github.com/0xf61"
 LABEL org.opencontainers.image.source="https://github.com/0xf61/taka"
-LABEL org.opencontainers.image.description="Pentest container with VPN, RDP and security tooling"
+LABEL org.opencontainers.image.description="Pentest container with VPN, web terminal UI and security tooling"
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=UTC
 
-# Base + desktop + RDP. ssl-cert is explicit: the pwnbox user needs the group
-# and it must not depend on xrdp's dependency chain.
+# Base. GUI comes from Tuxee (web terminals), so no xrdp/XFCE/Xorg packages
+# are installed at all (~1 GB lighter than RDP+XFCE).
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    kali-linux-core \
-    kali-desktop-xfce \
-    dbus-x11 \
-    ssl-cert \
-    xorgxrdp \
-    xrdp \
-    xserver-xorg-core && \
-    apt-get autoremove -y && apt-get clean && \
-    rm -rf /var/cache/apt /var/lib/apt/lists/* /tmp/* /var/log/* \
-           /usr/share/doc /usr/share/man /usr/share/locale/* /usr/share/info
+    kali-linux-core
 
 # Security tooling + dev/CLI. No compilers or -dev headers: everything that
 # needed them was built in the tools stage.
@@ -78,6 +98,7 @@ RUN apt-get update && \
     chisel \
     coercer \
     curl \
+    dbus \
     enum4linux-ng \
     evil-winrm \
     fastfetch \
@@ -85,6 +106,7 @@ RUN apt-get update && \
     feroxbuster \
     ffuf \
     fish \
+    fonts-dejavu-core \
     fzf \
     git \
     gzip \
@@ -96,6 +118,16 @@ RUN apt-get update && \
     lazygit \
     ligolo-ng \
     lsd \
+    libjpeg62-turbo \
+    libnettle8t64 \
+    libpam-modules \
+    libpam-runtime \
+    libpam0g \
+    libpixman-1-0 \
+    libstdc++6 \
+    libunwind8 \
+    libxfont2 \
+    matchbox-window-manager \
     metasploit-framework \
     mitm6 \
     neovim \
@@ -116,7 +148,11 @@ RUN apt-get update && \
     sqlmap \
     sudo \
     tmux \
+    tini \
     tshark \
+    x11-xkb-utils \
+    xkb-data \
+    xterm \
     unzip \
     wget \
     wireshark \
@@ -126,9 +162,8 @@ RUN apt-get update && \
     # python3-impacket ships wrappers pointing into /usr/share/doc (which we
     # delete); remove the broken wrappers, upstream impacket is pipx-installed
     rm -f /usr/bin/impacket-* && \
-    apt-get autoremove -y && apt-get clean && \
-    rm -rf /var/cache/apt /var/lib/apt/lists/* /tmp/* /var/log/* \
-           /usr/share/doc /usr/share/man /usr/share/locale/* /usr/share/info
+    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/log/* \
+        /usr/share/doc /usr/share/man /usr/share/locale/* /usr/share/info
 
 RUN mkdir -p /etc/apt/keyrings && \
     curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
@@ -139,10 +174,10 @@ RUN mkdir -p /etc/apt/keyrings && \
     apt-get install -y --no-install-recommends gh && \
     rm -rf /var/cache/apt /var/lib/apt/lists/*
 
-# Netbird. Its own RUN so the || true can never mask an apt failure above.
+# Netbird (its install.sh runs its own apt; || true can never mask a failure above)
 RUN curl -fsSL https://pkgs.netbird.io/install.sh | sh || true
 
-RUN useradd -m -s /usr/bin/fish -G sudo,ssl-cert pwnbox && \
+RUN useradd -m -s /usr/bin/fish -G sudo pwnbox && \
     echo "pwnbox:pwnbox" | chpasswd && \
     echo "pwnbox ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
@@ -179,14 +214,28 @@ RUN mkdir -p /home/pwnbox/.config/fish && \
     register-python-argcomplete -s fish nxc >> /home/pwnbox/.config/fish/config.fish && \
     chown -R pwnbox:pwnbox /home/pwnbox/.config
 
-RUN echo "startxfce4" > /home/pwnbox/.xsession && \
-    chown pwnbox:pwnbox /home/pwnbox/.xsession
-
-RUN sed -i 's/^test -x \/etc\/X11\/Xsession && exec \/etc\/X11\/Xsession/startxfce4/g' /etc/xrdp/startwm.sh && \
-    sed -i 's/^exec \/bin\/sh \/etc\/X11\/Xsession/startxfce4/g' /etc/xrdp/startwm.sh
-
 COPY tmux.conf /etc/tmux.conf
-COPY pwnbox/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
 
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+# ---- Tuxee runtime (persistent web terminals + file manager) ----
+# Go binary + per-terminal Xvnc binaries from the official image; the apt
+# libs they need are already in the tooling layer above. Config is ours:
+# plain HTTP on 1337, HTTPS disabled, PAM login (root/pwnbox).
+# tuxee-pacat/pulseaudio are skipped: audio forwarding needs tuxee's separate
+# audio stage; terminals and files are unaffected.
+COPY pwnbox/tuxee.json /etc/tuxee/config.json
+COPY --from=tuxee /usr/local/lib/tuxee /usr/local/lib/tuxee
+COPY --from=tuxee /usr/local/bin/tuxee-Xvnc /usr/local/bin/tuxee-Xvnc
+COPY --from=tuxee /usr/local/bin/tuxee-vncpasswd /usr/local/bin/tuxee-vncpasswd
+COPY --from=tuxee /init /init
+COPY --chmod=0755 --from=tuxee /opt/tuxee/entrypoint.sh /opt/tuxee/entrypoint.sh
+COPY --chmod=0755 --from=tuxee /opt/tuxee/docker-init.sh /opt/tuxee/docker-init.sh
+
+RUN ln -sf /usr/local/lib/tuxee/tuxee /usr/local/bin/tuxee && \
+    mkdir -p /var/lib/tuxee && chmod 0700 /var/lib/tuxee
+
+EXPOSE 1337
+VOLUME ["/var/lib/tuxee", "/root", "/init"]
+STOPSIGNAL SIGTERM
+HEALTHCHECK --interval=30s --timeout=5s CMD ["/usr/local/bin/tuxee", "healthcheck", "--config", "/etc/tuxee/config.json"]
+ENTRYPOINT ["/usr/bin/tini", "--", "/opt/tuxee/entrypoint.sh", "/init"]
+CMD ["/usr/local/bin/tuxee", "serve", "--config", "/etc/tuxee/config.json"]
